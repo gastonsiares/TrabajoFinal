@@ -1,0 +1,50 @@
+{
+  "monitores": [
+    {
+      "id": 1,
+      "nombre": "Monitor Full HD",
+      "precio": 400000,
+      "descripcion": "Monitor de 24 pulgadas con resolución Full HD.",
+      "imagen": "/img/MonitorSamsung.png"
+    },
+    {
+      "id": 2,
+      "nombre": "Monitor 22",
+      "precio": 180000,
+      "descripcion": "Monitor de 22 pulgadas",
+      "imagen": "/img/Monitor22Hikvision.png"
+    }
+  ],
+  "componentesPc": [
+    {
+      "id": 1,
+      "nombre": "Procesador Intel i7",
+      "precio": 350000,
+      "descripcion": "Procesador Intel Core i7 de última generación.",
+      "imagen": "/img/I712700.png"
+    },
+    {
+      "id": 2,
+      "nombre": "Tarjeta gráfica RTX 4060 Evo",
+      "precio": 500000,
+      "descripcion": "Tarjeta gráfica de alto rendimiento RTX 4060.",
+      "imagen": "/img/4060Evo.jpg"
+    }
+  ],
+  "perifericos": [
+    {
+      "id": 1,
+      "nombre": "Teclado mecánico",
+      "precio": 80000,
+      "descripcion": "Teclado mecánico retroiluminado RGB.",
+      "imagen": "/img/TecladoRedMecanico.png"
+    },
+    {
+      "id": 2,
+      "nombre": "Logitech G 703",
+      "precio": 45000,
+      "descripcion": "Mouse ergonómico con DPI ajustable.",
+      "imagen": "/img/LogitechG703.png"
+    }
+  ]
+}

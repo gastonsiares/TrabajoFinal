@@ -1,0 +1,135 @@
+/* dropdown se abre al pasar el mouse */
+.nav-item.dropdown:hover .dropdown-menu {
+    display: block;
+} 
+
+
+
+/* Contenedor de las tarjetas */
+#cardContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly; /* Centra las tarjetas horizontalmente */
+    gap: 20px; /* Espacio entre tarjetas */
+    padding: 20px;
+}
+
+/* Estilos de la tarjeta */
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 230px; /* Ajusta el ancho */
+    border: 1px solid #e6e6e6; /* Borde gris claro */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    transition: transform 0.2s ease-in-out;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.card:hover {
+    transform: scale(1.02); /* Efecto de hover */
+}
+
+/* Imagen de la tarjeta */
+.card img {
+    width: 100%; /* Reduce el ancho para que haya margen en los lados */
+    height: 430px; /* Altura*/
+    object-fit: contain; /* Asegura que las imágenes mantengan proporciones */
+    margin-top: 10px;
+    background-color: #f5f5f5;
+}
+
+/* Cuerpo de la tarjeta */
+.card-body {
+    padding: 50px;
+    text-align: center;
+    width: 100%;
+}
+
+/* Para Controlar el tamaño de los textos */
+.card-title {
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.card-price {
+    font-size: 1.1rem;
+    color: #3483fa; 
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* Botón de agregar al carrito */
+button.agregar-carrito {
+    background-color: #2E38F5; 
+    color: #fff;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.9rem;
+}
+
+button.agregar-carrito:hover {
+    background-color: #2968c8;
+}
+
+#titulos {
+    text-align: center;
+    background-color: #2E38F5; /* Color azul */
+    color: white; /* Color de texto blanco */
+    padding: 15px;
+    border-radius: 8px; /* Bordes redondeados */
+    margin: 20px 0;
+    font-size: 2rem;
+}
+.card-img-top {
+    width: 100%;          /* Ajusta el ancho de la imagen */
+    height: auto;         /* Mantiene la proporción */
+    max-height: 250px;    /* Ajusta la altura máxima*/
+    object-fit: cover;
+}
+
+.card {
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;          /* ocupa todo el ancho de la columna */
+}
+
+.card-body {
+    text-align: center;
+}
+
+
+
+.card-price {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #28a745;
+    margin-top: 10px;
+}
+
+.quantity-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.quantity-control .cantidad {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin: 0 10px;
+}
+
+.btn-agregar-carrito {
+    width: 100%;
+    font-weight: bold;
+}
+
+
