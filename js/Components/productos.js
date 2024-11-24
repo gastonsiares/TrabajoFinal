@@ -1,16 +1,14 @@
-// Función para obtener productos desde la API de MercadoLibre según la categoría especificada
 async function fetchProductos(categoria) {
   try {
     const response = await fetch(`https://api.mercadolibre.com/sites/MLA/search?q=${categoria}&limit=10`);
     if (!response.ok) throw new Error('Error al cargar los productos.');
     const data = await response.json();
-    return data.results; // Retornar los resultados de la búsqueda
+    return data.results; 
   } catch (error) {
     console.error(error);
   }
 }
 
-// Función para mostrar los productos en la página
 async function mostrarProductosPorCategoria(categoria) {
   const productos = await fetchProductos(categoria);
   if (!productos) return;
@@ -22,7 +20,7 @@ async function mostrarProductosPorCategoria(categoria) {
   }
 
   productos.forEach(producto => {
-    const highResImage = producto.thumbnail.replace('I.jpg', 'O.jpg'); // Obtener imagen en alta resolución
+    const highResImage = producto.thumbnail.replace('I.jpg', 'O.jpg'); 
     const card = document.createElement('div');
     card.classList.add('card', 'col-4', 'mb-3');
     card.innerHTML = `
@@ -45,12 +43,10 @@ async function mostrarProductosPorCategoria(categoria) {
     cardContainer.appendChild(card);
   });
 
-  // Agrega eventos a los botones de "Agregar al carrito"
   document.querySelectorAll('.agregar-carrito').forEach(button => {
     button.addEventListener('click', agregarAlCarrito);
   });
 
-  // Agrega eventos para los controles de cantidad
   document.querySelectorAll('.increment').forEach(button => {
     button.addEventListener('click', event => {
       const input = event.target.previousElementSibling;
@@ -66,19 +62,45 @@ async function mostrarProductosPorCategoria(categoria) {
   });
 }
 
-// Función para agregar productos al carrito
 function agregarAlCarrito(event) {
   const productoId = event.target.dataset.id;
-  const cantidad = parseInt(event.target.previousElementSibling.querySelector('.quantity-input').value);
-  // Aquí puedes almacenar el producto en LocalStorage, en un array, etc.
-  console.log(`Producto con ID ${productoId} agregado al carrito con cantidad ${cantidad}`);
+  const cantidad = parseInt(event.target.closest('.card').querySelector('.quantity-input').value);
+
+  const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+
+  const productoExistente = carrito.find(item => item.id === productoId);
+
+  if (productoExistente) {
+    productoExistente.cantidad += cantidad;
+  } else {
+    carrito.push({
+      id: productoId,
+      titulo: event.target.closest('.card').querySelector('.card-title').textContent,
+      precio: parseFloat(event.target.closest('.card').querySelector('.card-price').textContent.replace('$', '')),
+      cantidad: cantidad,
+      imagen: event.target.closest('.card').querySelector('img').src
+    });
+  }
+
+  localStorage.setItem("carrito", JSON.stringify(carrito));
+  actualizarContadorCarrito();
 }
 
-// Configurar la página para cargar la categoría especificada en data-categoria
-document.addEventListener('DOMContentLoaded', () => {
-  const cardContainer = document.getElementById('cardContainer');
-  const categoria = cardContainer.getAttribute('data-categoria'); // Leer la categoría desde el atributo
+function actualizarContadorCarrito() {
+  const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+  const totalProductos = carrito.reduce((acc, producto) => acc + producto.cantidad, 0);
 
-  // Llamar a la función para mostrar productos de la categoría especificada
+  const cartCount = document.getElementById("cartCount");
+  if (cartCount) cartCount.textContent = totalProductos;
+}
+
+
+// Se ejecuta cuando la página está completamente cargada
+document.addEventListener('DOMContentLoaded', () => {
+  actualizarContadorCarrito();
+
+  const cardContainer = document.getElementById('cardContainer');
+  const categoria = cardContainer.getAttribute('data-categoria'); 
+
   mostrarProductosPorCategoria(categoria);
 });
