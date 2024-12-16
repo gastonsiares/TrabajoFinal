@@ -1,4 +1,3 @@
-// Navbar.js
 const navElements = [
     { title: 'Inicio', link: '/Pages/home.html' },
     { title: 'Iniciar Sesion', link: '/Pages/InicioRegistro/login.html', hideWhenLoggedIn: true },
@@ -41,6 +40,7 @@ export const navBarComponent = `
                                         <li><a class="dropdown-item" href="${subItem.link}">${subItem.title}</a></li>
                                     `).join('')}
                                 </ul>
+                                
                             </li>
                         `;
                     } else {
@@ -51,13 +51,19 @@ export const navBarComponent = `
                         `;
                     }
                 }).join('')}
-            </ul>
+            </ul>       
+                <!-- Agregamos el formulario de búsqueda -->
+            <form id="searchForm" class="d-flex me-3">
+                <input class="form-control me-2" type="search" id="searchInput" placeholder="Buscar productos..." aria-label="Search">
+                <button class="btn btn-outline-light" type="submit">Buscar</button>
+            </form>
 
             <div class="d-flex align-items-center">
+            
                 <div id="userInfo" class="me-3 d-none">
                     <span id="userName" class="text-dark">Usuario</span>
                 </div>
-
+                
                 <button id="logoutButton" class="btn btn-outline-danger me-3 d-none">
                     Cerrar Sesión
                 </button>
@@ -76,6 +82,51 @@ export const navBarComponent = `
     </div>
 </nav>
 `;
+
+
+export function initializeSearch() {
+    const form = document.getElementById('searchForm');
+    if (form) {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevenir la recarga
+            const searchInput = document.getElementById('searchInput');
+            const busqueda = searchInput.value.trim();
+
+            if (busqueda) {
+                sessionStorage.setItem('ultimaBusqueda', busqueda);
+                const urlDestino = determinarCategoria(busqueda);
+                window.location.href = urlDestino;
+            }
+        });
+    }
+}
+
+function determinarCategoria(busqueda) {
+    const busquedaLower = busqueda.toLowerCase();
+    const categorias = {
+        'monitor': '/Pages/categorias/monitores.html',
+        'placa': '/Pages/categorias/placaDeVideo.html',
+        'gpu': '/Pages/categorias/placaDeVideo.html',
+        'teclado': '/Pages/categorias/perifericos.html',
+        'mouse': '/Pages/categorias/perifericos.html',
+        'ram': '/Pages/categorias/memoriaRam.html',
+        'procesador': '/Pages/categorias/microProcesadores.html',
+        'fuente': '/Pages/categorias/fuente.html',
+        'ssd': '/Pages/categorias/discoSolidoSsd.html',
+        'gabinete': '/Pages/categorias/gabinete.html',
+        'motherboard': '/Pages/categorias/motherboards.html',
+        'refrigeracion': '/Pages/categorias/refrigeracion.html',
+    };
+
+    for (const [keyword, url] of Object.entries(categorias)) {
+        if (busquedaLower.includes(keyword)) {
+            return url;
+        }
+    }
+
+    return '/Pages/categorias/busqueda.html'; 
+}
+
 
 export function actualizarContadorCarrito() {
     const cartCount = document.getElementById("cartCount");
@@ -129,3 +180,13 @@ export function actualizarEstadoSesion() {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('searchForm');
+    
+    if (form) {
+        form.addEventListener('submit', handleSearch);
+    }
+});
+
+

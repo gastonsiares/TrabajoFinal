@@ -1,5 +1,4 @@
-// carrito.js
-document.addEventListener("DOMContentLoaded", () => {
+stener("DOMContentLoaded", () => {
   inicializarCarrito();
 });
 
@@ -12,12 +11,10 @@ function inicializarCarrito() {
 }
 
 function crearEstructuraHTML() {
-  // Crear la estructura principal
   const mainContainer = document.createElement('div');
-  mainContainer.className = 'container my-5';
+  mainContainer.className = 'row';
   mainContainer.innerHTML = `
-  <div class="row">
-    <div class="col-lg-8">
+  <div class="col-lg-8">
       <h2 class="mb-4">Mi Carrito</h2>
       <div id="carritoContainer" class="list-group">
         <!-- Los productos se agregarán dinámicamente -->
@@ -47,9 +44,11 @@ function crearEstructuraHTML() {
         </button>
       </div>
     </div>
-  </div>
 `;
-
+const carritoMainContainer = document.getElementById('carritoMainContainer');
+  if (carritoMainContainer) {
+    carritoMainContainer.appendChild(mainContainer);
+  }
 
   // Crear el modal
   const modal = document.createElement('div');
@@ -74,8 +73,8 @@ function crearEstructuraHTML() {
     </div>
   `;
 
-  // Agregar todo al body
-  document.body.appendChild(mainContainer);
+  
+  
   document.body.appendChild(modal);
 }
 
@@ -89,7 +88,7 @@ function setupEventListeners() {
     mostrarNotificacion("Carrito vaciado", "info");
   });
   
-  // Delegación de eventos para el contenedor del carrito
+  
   document.getElementById('carritoContainer').addEventListener('click', (e) => {
     const target = e.target.closest('button, a');
     if (!target) return;

@@ -58,7 +58,7 @@ document.getElementById("registerForm").addEventListener("submit", function(even
         return;
     }
     
-    // Guardar en localStorage
+    
     localStorage.setItem("userData", JSON.stringify(formData));
     
     alert("Registro exitoso. Ahora puede iniciar sesión.");

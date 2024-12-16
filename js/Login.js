@@ -1,6 +1,6 @@
 const loginFormContainer = document.getElementById("loginFormContainer");
 
-// Crear el formulario de login
+
 loginFormContainer.innerHTML = `
     <form id="loginForm" class="mt-4 p-4 bg-light rounded shadow-sm">
         <div class="mb-3">
@@ -15,7 +15,7 @@ loginFormContainer.innerHTML = `
     </form>
 `;
 
-// Agregar el evento submit al formulario
+
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
 
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // Obtener datos del usuario del localStorage
+          
             const storedUserData = JSON.parse(localStorage.getItem('userData'));
 
             if (storedUserData && email === storedUserData.email && password === storedUserData.password) {
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastLogin: new Date().toISOString()
                 };
 
-                // Guardar en sessionStorage
+        
                 sessionStorage.setItem('usuarioActivo', JSON.stringify(sessionUser));
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('nombreUsuario', sessionUser.nombre);
@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Función para verificar si el usuario está logueado
 function checkUserSession() {
     const usuarioActivo = sessionStorage.getItem('usuarioActivo');
     if (!usuarioActivo) {
@@ -63,7 +62,7 @@ function checkUserSession() {
     return JSON.parse(usuarioActivo);
 }
 
-// Función para cerrar sesión
+
 function logout() {
     sessionStorage.removeItem('usuarioActivo');
     window.location.href = '/Pages/InicioRegistro/login.html';

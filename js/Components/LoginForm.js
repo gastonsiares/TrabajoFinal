@@ -1,4 +1,3 @@
-// LoginForm.js - Componente del formulario de login
 const loginFormContainer = document.getElementById("loginFormContainer");
 
 loginFormContainer.innerHTML = `

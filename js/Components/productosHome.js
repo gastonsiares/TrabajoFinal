@@ -1,179 +1,296 @@
 const categoriasConfig = {
-    "monitores": {
+    monitores: {
         displayName: "Monitores",
         filename: "monitores",
-        searchTerm: "monitor pc" 
+        searchTerm: "monitor pc",
+        icon: "tv"
     },
-    "gabinete": {
+    gabinete: {
         displayName: "Gabinetes",
         filename: "gabinete",
-        searchTerm: "gabinete pc"
+        searchTerm: "gabinete pc",
+        icon: "desktop"
     },
-    "discoSsd": {
+    discoSsd: {
         displayName: "Discos Solidos SSD",
         filename: "discoSolidoSsd",
-        searchTerm: "disco ssd"
+        searchTerm: "disco ssd",
+        icon: "hdd"
     },
-    "MemoriaRam": {
+    MemoriaRam: {
         displayName: "Memorias Ram",
         filename: "memoriaRam",
-        searchTerm: "memoria ram pc"
+        searchTerm: "memoria ram pc",
+        icon: "memory"
     },
-    "procesadores": {
+    procesadores: {
         displayName: "Procesadores",
         filename: "microProcesadores",
-        searchTerm: "procesador intel amd"
+        searchTerm: "procesador intel amd",
+        icon: "microchip"
     },
-    "motherboards": {
+    motherboards: {
         displayName: "Motherboards",
         filename: "motherboards",
-        searchTerm: "motherboard"
+        searchTerm: "motherboard",
+        icon: "server"
     },
-    "perifericos": {
+    perifericos: {
         displayName: "Perifericos",
         filename: "perifericos",
-        searchTerm: "perifericos pc"
+        searchTerm: "perifericos pc",
+        icon: "keyboard"
     },
-    "PlacasDeVideo": {
+    PlacasDeVideo: {
         displayName: "Placas De Video",
         filename: "placaDeVideo",
-        searchTerm: "placa video"
+        searchTerm: "placa video",
+        icon: "tv"
     },
-    "RefrigeracionLiquida": {
+    RefrigeracionLiquida: {
         displayName: "Refrigeracion Liquida",
         filename: "refrigeracion",
-        searchTerm: "refrigeracion liquida pc"
+        searchTerm: "refrigeracion liquida pc",
+        icon: "snowflake"
     }
 };
 
-// crea el HTML de una card del producto
-const createProductCard = (producto, categoria) => `
-    <div class="col-md-6 col-lg-6">
-        <div class="card product-card" onclick="window.location.href='/Pages/categorias/${categoriasConfig[categoria].filename}.html'">
-            <div class="card-hover-zoom">
-                <img src="${producto.thumbnail.replace("I.jpg", "O.jpg")}" class="card-img-top lazy-load" alt="${producto.title}">
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">${producto.title}</h5>
-                <p class="card-price">$${producto.price.toLocaleString()}</p>
-            </div>
-        </div>
-    </div>
-`;
 
-// Función para crear la sección de categoría
-const createCategorySection = (categoria, productos) => {
-    const section = document.createElement("div");
-    section.classList.add("categoria-section", "mb-5");
-    section.innerHTML = `
-        <h2 class="category-title mb-4">${categoriasConfig[categoria].displayName}</h2>
-        <div class="row g-4">
-            ${productos.map(producto => createProductCard(producto, categoria)).join('')}
-        </div>
-    `;
-    return section;
-};
+class HomeManager {
+    constructor() {
+        this.init();
+        this.cache = new Map();
+        this.retryAttempts = 3;
+        this.retryDelay = 1000;
 
-// Función para cargar productos de forma paralela
-async function cargarProductosParalelo() {
-    const categoriasAMostrar = Object.keys(categoriasConfig);
-    const promises = categoriasAMostrar.map(categoria => {
-        const searchTerm = categoriasConfig[categoria].searchTerm || categoria;
-        return fetch(`https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(searchTerm)}`)
-            .then(response => response.ok ? response.json() : Promise.reject(`Error en ${categoria}`))
-            .then(datos => ({
-                categoria,
-                productos: datos.results?.slice(0, 2).map(producto => ({
-                    title: producto.title,
-                    price: producto.price,
-                    thumbnail: producto.thumbnail,
-                    categoria
-                })) || []
-            }))
-            .catch(error => {
-                console.error(`Error en ${categoria}:`, error);
-                return { categoria, productos: [] };
-            });
-    });
+      
+    }
 
-    return Promise.all(promises);
-}
+    init() {
+        document.addEventListener('DOMContentLoaded', () => this.mostrarProductos());
+        window.addEventListener('error', this.handleError.bind(this));
+    }
 
-// Función principal 
-async function mostrarProductos() {
-    const contenedorProductos = document.getElementById("contenedor-productos");
-    contenedorProductos.id = "home-products";
-    
-    // Mostrar un loader mientras se estan cargan los productos
-    contenedorProductos.innerHTML = `
-        <div class="text-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Cargando...</span>
-            </div>
-        </div>
-    `;
+    handleError(error) {
+        console.error('Error capturado:', error);
+        this.mostrarNotificacion('Ha ocurrido un error. Por favor, recarga la página.', 'error');
+    }
 
-    try {
-        // sección de bienvenida
+    createWelcomeSection() {
         const welcomeSection = document.createElement("div");
         welcomeSection.classList.add("welcome-section", "text-center", "mb-5");
         welcomeSection.innerHTML = `
             <h1 class="display-4 animate__animated animate__fadeIn">Bienvenido a TIENDA 5-5</h1>
-            <p class="lead animate__animated animate__fadeIn animate__delay-1s">Explora nuestra selección de productos tecnológicos</p>
+            <p class="lead animate__animated animate__fadeIn animate__delay-1s">
+                Explora nuestra selección de productos tecnológicos
+            </p>
         `;
+        return welcomeSection;
+    }
 
-        // Cargar los productos en paralelo
-        const resultados = await cargarProductosParalelo();
-        
-        
-        contenedorProductos.innerHTML = '';
-        contenedorProductos.appendChild(welcomeSection);
-
-       
-        const mainGrid = document.createElement('div');
-        mainGrid.classList.add('container');
-
-       
-        resultados
-            .filter(({ productos }) => productos.length > 0)
-            .forEach(({ categoria, productos }) => {
-                mainGrid.appendChild(createCategorySection(categoria, productos));
-            });
-
-        contenedorProductos.appendChild(mainGrid);
-
-        
-        const lazyLoadImages = () => {
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.classList.remove('lazy-load');
-                        observer.unobserve(img);
-                    }
-                });
-            });
-
-            document.querySelectorAll('img.lazy-load').forEach(img => {
-                img.dataset.src = img.src;
-                img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // Placeholder
-                imageObserver.observe(img);
-            });
-        };
-
-       
-        lazyLoadImages();
-
-    } catch (error) {
-        console.error('Error al cargar los productos:', error);
-        contenedorProductos.innerHTML = `
-            <div class="alert alert-danger" role="alert">
-                Hubo un error al cargar los productos. Por favor, intenta nuevamente más tarde.
+    createProductCard(producto, categoria) {
+        return `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card product-card h-100 shadow-sm" 
+                     data-categoria="${categoria}"
+                     onclick="window.location.href='/Pages/categorias/${categoriasConfig[categoria]?.filename || 'productos'
+            }.html'">
+                    <div class="card-hover-zoom position-relative">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                             data-src="${producto.thumbnail.replace("I.jpg", "O.jpg")}"
+                             class="card-img-top lazy-load"
+                             alt="${producto.title}">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">${producto.title}</h5>
+                        <p class="card-text">
+                            ${producto.price ? `
+                                <span class="price">$${producto.price.toLocaleString()}</span>
+                                ${producto.original_price ? `
+                                    <span class="text-decoration-line-through text-muted ms-2">
+                                        $${producto.original_price.toLocaleString()}
+                                    </span>
+                                ` : ''}
+                            ` : ''}
+                        </p>
+                        ${producto.shipping?.free_shipping ? `
+                            <span class="badge bg-success">
+                                <i class="fas fa-truck"></i> Envío gratis
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
             </div>
         `;
     }
+
+    createCategorySection(categoria, productos) {
+        const section = document.createElement("div");
+        section.classList.add("categoria-section", "mb-5", "animate__animated", "animate__fadeIn");
+        section.innerHTML = `
+            <div class="category-header d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${categoriasConfig[categoria].icon} me-2"></i>
+                    <h2 class="category-title mb-0">${categoriasConfig[categoria].displayName}</h2>
+                </div>
+                <a href="/Pages/categorias/${categoriasConfig[categoria].filename}.html" 
+                   class="btn btn-outline-primary btn-sm">
+                    Ver todos <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="row g-4">
+                ${productos.map(producto => this.createProductCard(producto, categoria)).join('')}
+            </div>
+        `;
+        return section;
+    }
+
+    async fetchWithRetry(url, attempts = this.retryAttempts) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            if (attempts === 1) throw error;
+            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+            return this.fetchWithRetry(url, attempts - 1);
+        }
+    }
+
+    async cargarProductosParalelo() {
+        const categoriasAMostrar = Object.keys(categoriasConfig);
+        const promises = categoriasAMostrar.map(async categoria => {
+            try {
+                if (this.cache.has(categoria)) {
+                    return this.cache.get(categoria);
+                }
+
+                const searchTerm = categoriasConfig[categoria].searchTerm || categoria;
+                const datos = await this.fetchWithRetry(
+                    `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(searchTerm)}`
+                );
+
+                const resultado = {
+                    categoria,
+                    productos: datos.results?.slice(0, 3).map(producto => ({
+                        title: producto.title,
+                        price: producto.price,
+                        original_price: producto.original_price,
+                        thumbnail: producto.thumbnail,
+                        shipping: producto.shipping,
+                        categoria
+                    })) || []
+                };
+
+                this.cache.set(categoria, resultado);
+                return resultado;
+
+            } catch (error) {
+                console.error(`Error en ${categoria}:`, error);
+                return { categoria, productos: [] };
+            }
+        });
+
+        return Promise.all(promises);
+    }
+
+    async mostrarProductos() {
+        const contenedorProductos = document.getElementById("contenedor-productos");
+        if (!contenedorProductos) return;
+
+        contenedorProductos.id = "home-products";
+
+        try {
+            contenedorProductos.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            `;
+
+            const welcomeSection = this.createWelcomeSection();
+            const resultados = await this.cargarProductosParalelo();
+
+            contenedorProductos.innerHTML = '';
+            contenedorProductos.appendChild(welcomeSection);
+
+            const mainGrid = document.createElement('div');
+            mainGrid.classList.add('container');
+
+            const productosValidos = resultados.filter(({ productos }) => productos.length > 0);
+
+            if (productosValidos.length === 0) {
+                mainGrid.innerHTML = `
+                    <div class="alert alert-info">
+                        No se encontraron productos disponibles en este momento.
+                        <button class="btn btn-link" onclick="location.reload()">
+                            Intentar nuevamente
+                        </button>
+                    </div>
+                `;
+            } else {
+                productosValidos.forEach(({ categoria, productos }) => {
+                    mainGrid.appendChild(this.createCategorySection(categoria, productos));
+                });
+            }
+
+            contenedorProductos.appendChild(mainGrid);
+            this.initLazyLoading();
+
+        } catch (error) {
+            console.error('Error al cargar los productos:', error);
+            contenedorProductos.innerHTML = `
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Error al cargar los productos</h4>
+                    <p>Lo sentimos, ha ocurrido un error al cargar los productos.</p>
+                    <hr>
+                    <button class="btn btn-danger" onclick="location.reload()">
+                        Intentar nuevamente
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    initLazyLoading() {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy-load');
+                    observer.unobserve(img);
+                }
+            });
+        });
+
+        document.querySelectorAll('img.lazy-load').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    mostrarNotificacion(mensaje, tipo) {
+        const toast = document.createElement('div');
+        toast.classList.add('toast', 'position-fixed', 'bottom-0', 'end-0', 'm-3');
+        toast.innerHTML = `
+            <div class="toast-header bg-${tipo === 'success' ? 'success' : 'danger'} text-white">
+                <strong class="me-auto">Notificación</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${mensaje}
+            </div>
+        `;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
 }
 
-// Agregar event listener para DOMContentLoaded
-document.addEventListener('DOMContentLoaded', mostrarProductos);
+
+// Inicializar
+const homeManager = new HomeManager();

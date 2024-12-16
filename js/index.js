@@ -1,27 +1,25 @@
-import { navBarComponent, actualizarContadorCarrito, actualizarEstadoSesion } from "./Components/Navbar.js";
+import { navBarComponent, actualizarContadorCarrito, actualizarEstadoSesion, initializeSearch } from "./Components/Navbar.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Insertar el navbar
+
     const navContainer = document.querySelector('header');
     if (navContainer) {
         navContainer.innerHTML = navBarComponent;
-        
-        // Una vez que el navbar está en el DOM, inicializar las funcionalidades
+
+
         initializeNavbar();
-        
-        // mensaje de bienvenida
+
+
         mostrarMensajeBienvenida();
     }
 });
 
 function initializeNavbar() {
-    // Inicializar carrito
     actualizarContadorCarrito();
-    
-    // Inicializar estado de sesión
+    initializeSearch()
     actualizarEstadoSesion();
-    
-    // Configurar el botón de logout
+
+
     const logoutButton = document.getElementById('logoutButton');
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
@@ -36,7 +34,7 @@ function initializeNavbar() {
 function mostrarMensajeBienvenida() {
     const welcomeMessage = document.getElementById('welcomeMessage');
     const usuarioActivo = sessionStorage.getItem('usuarioActivo');
-    
+
     if (welcomeMessage && usuarioActivo) {
         const usuario = JSON.parse(usuarioActivo);
         welcomeMessage.textContent = `Bienvenido, ${usuario.nombre}`;
@@ -44,3 +42,4 @@ function mostrarMensajeBienvenida() {
 }
 
 export { initializeNavbar, mostrarMensajeBienvenida };
+

@@ -1,106 +1,248 @@
-async function fetchProductos(categoria) {
-  try {
-    const response = await fetch(`https://api.mercadolibre.com/sites/MLA/search?q=${categoria}&limit=10`);
-    if (!response.ok) throw new Error('Error al cargar los productos.');
-    const data = await response.json();
-    return data.results; 
-  } catch (error) {
-    console.error(error);
-  }
-}
+import { fetchProductos } from '../api/mercadolibre.js';
 
-async function mostrarProductosPorCategoria(categoria) {
-  const productos = await fetchProductos(categoria);
-  if (!productos) return;
-
-  const cardContainer = document.getElementById('cardContainer');
-  if (!cardContainer) {
-    console.error('No se encontró el contenedor de cards');
-    return;
+class ProductManager {
+  constructor() {
+    this.carrito = this.getCarritoFromStorage();
+    this.initEventListeners();
   }
 
-  productos.forEach(producto => {
-    const highResImage = producto.thumbnail.replace('I.jpg', 'O.jpg'); 
+  getCarritoFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem("carrito")) || [];
+    } catch (error) {
+      console.error('Error al obtener carrito:', error);
+      return [];
+    }
+  }
+
+  crearCardProducto(producto) {
+    const stock = producto.stock || 10; 
     const card = document.createElement('div');
-    card.classList.add('card', 'col-4', 'mb-3');
+    card.classList.add('card', 'col-4', 'mb-3', 'producto-card');
     card.innerHTML = `
-      <img src="${highResImage}" class="card-img-top img-fluid" alt="${producto.title}">
-      <div class="card-body">
-        <h5 class="card-title">${producto.title}</h5>
-        <p class="card-text">${producto.condition === 'new' ? 'Nuevo' : 'Usado'}</p>
-        <p class="card-description">${producto.title.length > 80 ? producto.title.slice(0, 77) + '...' : producto.title}</p>
-        <p class="card-price">$${producto.price}</p>
+            <div class="card-img-wrapper position-relative">
+                <img src="${producto.imagen}" 
+                     class="card-img-top img-fluid lazy-load" 
+                     alt="${this.sanitizeHTML(producto.titulo)}"
+                     data-src="${producto.imagen}">
+                ${producto.descuento ? `
+                    <span class="badge bg-danger position-absolute top-0 end-0">
+                        -${producto.descuento}%
+                    </span>
+                ` : ''}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">${this.sanitizeHTML(producto.titulo)}</h5>
+                <p class="card-text">${this.sanitizeHTML(producto.condicion)}</p>
+                <p class="card-description">${this.sanitizeHTML(producto.descripcion)}</p>
+                <div class="price-container">
+                    ${producto.precioOriginal ? `
+                        <span class="text-decoration-line-through text-muted">
+                            $${producto.precioOriginal}
+                        </span>
+                    ` : ''}
+                    <p class="card-price fs-4">$${producto.precio}</p>
+                </div>
+                <p class="stock-info ${stock < 5 ? 'text-danger' : ''}">
+                    ${stock < 5 ? `¡Solo quedan ${stock} unidades!` : `Stock disponible: ${stock}`}
+                </p>
+                <div class="quantity-control d-flex align-items-center mb-3">
+                    <button class="btn btn-sm btn-secondary decrement">-</button>
+                    <input type="number" 
+                           value="1" 
+                           min="1" 
+                           max="${stock}"
+                           class="form-control mx-2 quantity-input" 
+                           style="width: 60px;">
+                    <button class="btn btn-sm btn-secondary increment">+</button>
+                </div>
+                <button class="btn btn-primary agregar-carrito" 
+                        data-id="${producto.id}"
+                        ${stock === 0 ? 'disabled' : ''}>
+                    ${stock === 0 ? 'Sin Stock' : 'Agregar al carrito'}
+                </button>
+            </div>
+        `;
+    return card;
+  }
 
-        <div class="quantity-control d-flex align-items-center mb-3">
-          <button class="btn btn-sm btn-secondary decrement">-</button>
-          <input type="number" value="1" min="1" class="form-control mx-2 quantity-input" style="width: 60px;">
-          <button class="btn btn-sm btn-secondary increment">+</button>
-        </div>
+  sanitizeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
 
-        <button class="btn btn-primary agregar-carrito" data-id="${producto.id}">Agregar al carrito</button>
-      </div>
-    `;
-    cardContainer.appendChild(card);
-  });
+  agregarEventosCard(card) {
+    const incrementBtn = card.querySelector('.increment');
+    const decrementBtn = card.querySelector('.decrement');
+    const quantityInput = card.querySelector('.quantity-input');
+    const agregarCarritoBtn = card.querySelector('.agregar-carrito');
 
-  document.querySelectorAll('.agregar-carrito').forEach(button => {
-    button.addEventListener('click', agregarAlCarrito);
-  });
+    const updateQuantity = (newValue) => {
+      const max = parseInt(quantityInput.max);
+      const value = Math.max(1, Math.min(newValue, max));
+      quantityInput.value = value;
+    };
 
-  document.querySelectorAll('.increment').forEach(button => {
-    button.addEventListener('click', event => {
-      const input = event.target.previousElementSibling;
-      input.value = parseInt(input.value) + 1;
+    incrementBtn?.addEventListener('click', () => {
+      updateQuantity(parseInt(quantityInput.value) + 1);
     });
-  });
 
-  document.querySelectorAll('.decrement').forEach(button => {
-    button.addEventListener('click', event => {
-      const input = event.target.nextElementSibling;
-      if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+    decrementBtn?.addEventListener('click', () => {
+      updateQuantity(parseInt(quantityInput.value) - 1);
     });
-  });
-}
 
-function agregarAlCarrito(event) {
-  const productoId = event.target.dataset.id;
-  const cantidad = parseInt(event.target.closest('.card').querySelector('.quantity-input').value);
+    quantityInput?.addEventListener('change', (e) => {
+      updateQuantity(parseInt(e.target.value));
+    });
 
-  const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+    agregarCarritoBtn?.addEventListener('click', (e) => this.agregarAlCarrito(e));
+  }
 
-  const productoExistente = carrito.find(item => item.id === productoId);
+  async agregarAlCarrito(event) {
+    try {
+      const card = event.target.closest('.card');
+      const productoId = event.target.dataset.id;
+      const cantidad = parseInt(card.querySelector('.quantity-input').value);
+      const stock = parseInt(card.querySelector('.quantity-input').max);
 
-  if (productoExistente) {
-    productoExistente.cantidad += cantidad;
-  } else {
-    carrito.push({
-      id: productoId,
-      titulo: event.target.closest('.card').querySelector('.card-title').textContent,
-      precio: parseFloat(event.target.closest('.card').querySelector('.card-price').textContent.replace('$', '')),
-      cantidad: cantidad,
-      imagen: event.target.closest('.card').querySelector('img').src
+      if (cantidad > stock) {
+        throw new Error(`Solo hay ${stock} unidades disponibles`);
+      }
+
+      const productoExistente = this.carrito.find(item => item.id === productoId);
+      const nuevaCantidad = (productoExistente?.cantidad || 0) + cantidad;
+
+      if (nuevaCantidad > stock) {
+        throw new Error('La cantidad total supera el stock disponible');
+      }
+
+      if (productoExistente) {
+        productoExistente.cantidad = nuevaCantidad;
+      } else {
+        this.carrito.push({
+          id: productoId,
+          titulo: card.querySelector('.card-title').textContent,
+          precio: parseFloat(card.querySelector('.card-price').textContent.replace('$', '')),
+          cantidad: cantidad,
+          imagen: card.querySelector('img').src,
+          stock: stock
+        });
+      }
+
+      localStorage.setItem("carrito", JSON.stringify(this.carrito));
+      this.actualizarContadorCarrito();
+      this.mostrarNotificacion('Producto agregado al carrito', 'success');
+    } catch (error) {
+      this.mostrarNotificacion(error.message, 'error');
+    }
+  }
+
+  actualizarContadorCarrito() {
+    const totalProductos = this.carrito.reduce((acc, producto) => acc + producto.cantidad, 0);
+    const cartCount = document.getElementById("cartCount");
+    if (cartCount) {
+      cartCount.textContent = totalProductos;
+      cartCount.classList.add('animate__animated', 'animate__bounce');
+      setTimeout(() => {
+        cartCount.classList.remove('animate__animated', 'animate__bounce');
+      }, 1000);
+    }
+  }
+
+  mostrarNotificacion(mensaje, tipo) {
+    const toast = document.createElement('div');
+    toast.classList.add('toast', 'position-fixed', 'bottom-0', 'end-0', 'm-3');
+    toast.innerHTML = `
+            <div class="toast-header bg-${tipo === 'success' ? 'success' : 'danger'} text-white">
+                <strong class="me-auto">Notificación</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${mensaje}
+            </div>
+        `;
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => {
+      toast.remove();
     });
   }
 
-  localStorage.setItem("carrito", JSON.stringify(carrito));
-  actualizarContadorCarrito();
+  initEventListeners() {
+    document.addEventListener('DOMContentLoaded', () => {
+      this.actualizarContadorCarrito();
+      const cardContainer = document.getElementById('cardContainer');
+      if (cardContainer) {
+        const categoria = cardContainer.dataset.categoria;
+        this.mostrarProductosPorCategoria(categoria);
+      }
+    });
+  }
+
+  async mostrarProductosPorCategoria(categoria) {
+    const cardContainer = document.getElementById('cardContainer');
+    if (!cardContainer) return;
+
+    try {
+      cardContainer.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            `;
+
+      const productos = await fetchProductos(categoria);
+      cardContainer.innerHTML = '';
+
+      if (productos.length === 0) {
+        cardContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        No se encontraron productos en esta categoría
+                    </div>
+                `;
+        return;
+      }
+
+      productos.forEach(producto => {
+        const card = this.crearCardProducto(producto);
+        this.agregarEventosCard(card);
+        cardContainer.appendChild(card);
+      });
+
+      this.initLazyLoading();
+    } catch (error) {
+      console.error('Error al mostrar productos:', error);
+      cardContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    Error al cargar los productos. Por favor, intenta nuevamente.
+                </div>
+            `;
+    }
+  }
+
+  initLazyLoading() {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.remove('lazy-load');
+          observer.unobserve(img);
+        }
+      });
+    });
+
+    document.querySelectorAll('img.lazy-load').forEach(img => {
+      imageObserver.observe(img);
+    });
+  }
 }
 
-function actualizarContadorCarrito() {
-  const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-  const totalProductos = carrito.reduce((acc, producto) => acc + producto.cantidad, 0);
-
-  const cartCount = document.getElementById("cartCount");
-  if (cartCount) cartCount.textContent = totalProductos;
-}
+export const productManager = new ProductManager();
+export const { actualizarContadorCarrito } = productManager;
 
 
-// Se ejecuta cuando la página está completamente cargada
-document.addEventListener('DOMContentLoaded', () => {
-  actualizarContadorCarrito();
 
-  const cardContainer = document.getElementById('cardContainer');
-  const categoria = cardContainer.getAttribute('data-categoria'); 
-
-  mostrarProductosPorCategoria(categoria);
-});
